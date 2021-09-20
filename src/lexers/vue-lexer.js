@@ -11,34 +11,22 @@ export default class VueLexer extends BaseLexer {
   extract(content, filename) {
     let keys = []
 
-    if (content.indexOf('<script') !== -1) {
-      const Lexer = new JavascriptLexer({ functions: this.functions })
-      const compiledComponent = require('vue-template-compiler').parseComponent(
-        content
+    const compiledComponent = require('vue-template-compiler').parseComponent(
+      content
+    )
+    const Lexer = new JavascriptLexer({ functions: this.functions })
+    Lexer.on('warning', (warning) => this.emit('warning', warning))
+    if (compiledComponent.script) {
+      keys = keys.concat(Lexer.extract(compiledComponent.script.content))
+    }
+
+    const Lexer2 = new JavascriptLexer({ functions: this.functions })
+    Lexer2.on('warning', (warning) => this.emit('warning', warning))
+
+    if (compiledComponent.template) {
+      keys = keys.concat(
+        Lexer2.extract(require('vue-template-compiler').compile(content).render)
       )
-      Lexer.on('warning', (warning) => this.emit('warning', warning))
-      if (compiledComponent.script) {
-        keys = keys.concat(Lexer.extract(compiledComponent.script.content))
-      }
-
-      if (compiledComponent.template) {
-        keys = keys.concat(
-          Lexer.extract(
-            require('vue-template-compiler').compile(content).render
-          )
-        )
-      }
-    } else {
-      const Lexer = new JavascriptLexer()
-      Lexer.on('warning', (warning) => this.emit('warning', warning))
-      keys = keys.concat(Lexer.extract(content))
-
-      const compiledTemplate = require('vue-template-compiler').compile(
-        content
-      ).render
-      const Lexer2 = new JavascriptLexer({ functions: this.functions })
-      Lexer2.on('warning', (warning) => this.emit('warning', warning))
-      keys = keys.concat(Lexer2.extract(compiledTemplate))
     }
 
     return keys

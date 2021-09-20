@@ -63,25 +63,25 @@ describe('VueLexer', () => {
     done()
   })
 
+  it('extracts keys from js script body', (done) => {
+    const Lexer = new VueLexer()
+    const content =
+      "<script>import i18next from './i18next'; i18next.t('OUTSIDE_OF_COMPONENT');</script>"
+    assert.deepEqual(Lexer.extract(content), [{ key: 'OUTSIDE_OF_COMPONENT' }])
+    done()
+  })
+
   it('extracts i18n component translation', (done) => {
     const Lexer = new VueLexer()
-    const content = `<template>
-  <div>
-    <h1>{{ $t('TEMPLATE') }}</h1>
-  </div>
-</template>
+    const content = `<template><h1>{{ $t('TEMPLATE') }}</h1></template>
 
 <script lang="ts">
 import Vue from 'vue'
 import i18next from './i18n'
-import i18n from '@/components/i18n'
 
 const outside = i18next.t('OUTSIDE_OF_COMPONENT')
 
 export default Vue.extend({
-  components: {
-    i18n,
-  },
   props: {
     prop: {
       type: String,
@@ -90,16 +90,16 @@ export default Vue.extend({
   },
   computed: {
     msg() {
-      return this.$t('COMPUTED_VALUE')
+      return this.$i18next.t('COMPUTED_VALUE')
     },
   },
   methods: {
     add() {
-      return this.$t('METHOD')
+      this.$i18next.t('METHOD')
     },
   },
   beforeRouteUpdate() {
-    this.$t('BEFORE_ROUTE_UPDATE')
+    this.$i18next.t('BEFORE_ROUTE_UPDATE')
   },
 })
 </script>`
