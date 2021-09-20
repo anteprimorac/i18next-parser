@@ -5,22 +5,41 @@ VueLexer = /*#__PURE__*/function (_BaseLexer) {(0, _inherits2["default"])(VueLex
   function VueLexer() {var _this;var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};(0, _classCallCheck2["default"])(this, VueLexer);
     _this = _super.call(this, options);
 
-    _this.functions = options.functions || ['$t'];return _this;
+    _this.functions = options.functions || ['$t', 't'];return _this;
   }(0, _createClass2["default"])(VueLexer, [{ key: "extract", value:
 
     function extract(content, filename) {var _this2 = this;
       var keys = [];
 
-      var Lexer = new _javascriptLexer["default"]();
-      Lexer.on('warning', function (warning) {return _this2.emit('warning', warning);});
-      keys = keys.concat(Lexer.extract(content));
+      if (content.indexOf('<script') !== -1) {
+        var Lexer = new _javascriptLexer["default"]({ functions: this.functions });
+        var compiledComponent = require('vue-template-compiler').parseComponent(
+        content);
 
-      var compiledTemplate = require('vue-template-compiler').compile(
-      content).
-      render;
-      var Lexer2 = new _javascriptLexer["default"]({ functions: this.functions });
-      Lexer2.on('warning', function (warning) {return _this2.emit('warning', warning);});
-      keys = keys.concat(Lexer2.extract(compiledTemplate));
+        Lexer.on('warning', function (warning) {return _this2.emit('warning', warning);});
+        if (compiledComponent.script) {
+          keys = keys.concat(Lexer.extract(compiledComponent.script.content));
+        }
+
+        if (compiledComponent.template) {
+          keys = keys.concat(
+          Lexer.extract(
+          require('vue-template-compiler').compile(content).render));
+
+
+        }
+      } else {
+        var _Lexer = new _javascriptLexer["default"]();
+        _Lexer.on('warning', function (warning) {return _this2.emit('warning', warning);});
+        keys = keys.concat(_Lexer.extract(content));
+
+        var compiledTemplate = require('vue-template-compiler').compile(
+        content).
+        render;
+        var Lexer2 = new _javascriptLexer["default"]({ functions: this.functions });
+        Lexer2.on('warning', function (warning) {return _this2.emit('warning', warning);});
+        keys = keys.concat(Lexer2.extract(compiledTemplate));
+      }
 
       return keys;
     } }]);return VueLexer;}(_baseLexer["default"]);exports["default"] = VueLexer;
