@@ -16,16 +16,16 @@ export default class VueLexer extends BaseLexer {
     )
     const Lexer = new JavascriptLexer({ functions: this.functions })
     Lexer.on('warning', (warning) => this.emit('warning', warning))
+
+    // extract keys from js script if exists
     if (compiledComponent.script) {
       keys = keys.concat(Lexer.extract(compiledComponent.script.content))
     }
 
-    const Lexer2 = new JavascriptLexer({ functions: this.functions })
-    Lexer2.on('warning', (warning) => this.emit('warning', warning))
-
+    // compile and extract keys from component template if exists
     if (compiledComponent.template) {
       keys = keys.concat(
-        Lexer2.extract(require('vue-template-compiler').compile(content).render)
+        Lexer.extract(require('vue-template-compiler').compile(content).render)
       )
     }
 
