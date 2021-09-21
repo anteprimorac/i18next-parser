@@ -63,7 +63,14 @@ describe('VueLexer', () => {
     done()
   })
 
-  it('extracts keys from js script body', (done) => {
+  it('extracts keys from template without script', (done) => {
+    const Lexer = new VueLexer()
+    const content = "<template><p>{{ $t('first') }}</p></template>"
+    assert.deepEqual(Lexer.extract(content), [{ key: 'first' }])
+    done()
+  })
+
+  it('extracts keys from component script body', (done) => {
     const Lexer = new VueLexer()
     const content =
       "<script>import i18next from './i18next'; i18next.t('OUTSIDE_OF_COMPONENT');</script>"
@@ -71,47 +78,39 @@ describe('VueLexer', () => {
     done()
   })
 
-  it('extracts i18n component translation', (done) => {
+  it('extracts keys from component prop default function', (done) => {
     const Lexer = new VueLexer()
-    const content = `<template><h1>{{ $t('TEMPLATE') }}</h1></template>
+    const content =
+      "<script>export default { props: { prop: { type: String, default: () => i18next.t('DEFAULT_PROP_VALUE') } } }</script>"
 
-<script lang="ts">
-import Vue from 'vue'
-import i18next from './i18n'
+    assert.deepEqual(Lexer.extract(content), [{ key: 'DEFAULT_PROP_VALUE' }])
+    done()
+  })
 
-const outside = i18next.t('OUTSIDE_OF_COMPONENT')
+  it('extracts keys from component computed value', (done) => {
+    const Lexer = new VueLexer()
+    const content =
+      "<script>export default { computed: { msg() { return this.$i18next.t('COMPUTED_VALUE') } } }</script>"
 
-export default Vue.extend({
-  props: {
-    prop: {
-      type: String,
-      default: () => i18next.t('DEFAULT_PROP_VALUE'),
-    },
-  },
-  computed: {
-    msg() {
-      return this.$i18next.t('COMPUTED_VALUE')
-    },
-  },
-  methods: {
-    add() {
-      this.$i18next.t('METHOD')
-    },
-  },
-  beforeRouteUpdate() {
-    this.$i18next.t('BEFORE_ROUTE_UPDATE')
-  },
-})
-</script>`
+    assert.deepEqual(Lexer.extract(content), [{ key: 'COMPUTED_VALUE' }])
+    done()
+  })
 
-    assert.deepEqual(Lexer.extract(content.toString('utf8')), [
-      { key: 'OUTSIDE_OF_COMPONENT' },
-      { key: 'DEFAULT_PROP_VALUE' },
-      { key: 'COMPUTED_VALUE' },
-      { key: 'METHOD' },
-      { key: 'BEFORE_ROUTE_UPDATE' },
-      { key: 'TEMPLATE' },
-    ])
+  it('extracts keys from component method', (done) => {
+    const Lexer = new VueLexer()
+    const content =
+      "<script>export default { methods: { method() { this.$i18next.t('METHOD') } } }</script>"
+
+    assert.deepEqual(Lexer.extract(content), [{ key: 'METHOD' }])
+    done()
+  })
+
+  it('extracts keys from vue router component hook', (done) => {
+    const Lexer = new VueLexer()
+    const content =
+      "<script>export default { beforeRouteUpdate() { this.$i18next.t('BEFORE_ROUTE_UPDATE') } }</script>"
+
+    assert.deepEqual(Lexer.extract(content), [{ key: 'BEFORE_ROUTE_UPDATE' }])
     done()
   })
 })
